@@ -1,6 +1,11 @@
 #include <iostream>
+#include <string>
 #include <signal.h>
+
+#include <glog/logging.h>
+
 #include "TCPClient.h"
+
 
 TCPClient tcp;
 
@@ -19,9 +24,12 @@ int main(int argc, char *argv[])
 	signal(SIGINT, sig_exit);
 
 	tcp.setup(argv[1],atoi(argv[2]));
+	int i = 0;
 	while(1)
 	{
-		tcp.Send(argv[3]);
+        const std::string string2Send(argv[3] + std::to_string(++i));
+        LOG(INFO) << "Send: " << string2Send;
+		tcp.Send(string2Send);
 		string rec = tcp.receive();
 		if( rec != "" )
 		{

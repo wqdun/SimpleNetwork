@@ -1,7 +1,11 @@
 #include <iostream>
 #include <csignal>
 #include <ctime>
+
+#include <glog/logging.h>
+
 #include "TCPServer.h"
+
 
 TCPServer tcp;
 pthread_t msg1[MAX_CLIENT];
@@ -14,7 +18,7 @@ void close_app(int s) {
 }
 
 void * send_client(void * m) {
-        struct descript_socket *desc = (struct descript_socket*) m;
+    struct descript_socket *desc = (struct descript_socket*) m;
 
 	while(1) {
 		if(!tcp.is_online() && tcp.get_last_closed_sockets() == desc->id) {
@@ -27,15 +31,21 @@ void * send_client(void * m) {
 		int min  = now->tm_min;
 		int sec  = now->tm_sec;
 
-		std::string date = 
-			    to_string(now->tm_year + 1900) + "-" +
-			    to_string(now->tm_mon + 1)     + "-" +
-			    to_string(now->tm_mday)        + " " +
-			    to_string(hour)                + ":" +
-			    to_string(min)                 + ":" +
-			    to_string(sec)                 + "\r\n";
-		cerr << date << endl;
+		std::string date(
+		    to_string(now->tm_year + 1900) + "-" +
+		    to_string(now->tm_mon + 1)     + "-" +
+		    to_string(now->tm_mday)        + " " +
+		    to_string(hour)                + ":" +
+		    to_string(min)                 + ":" +
+		    to_string(sec)
+	    );
+
+        // TODO: GetImuString here
+
+
+		LOG(INFO) << "Gonna send: " << date;
 		tcp.Send(date, desc->id);
+
 		sleep(time_send);
 	}
 	pthread_exit(NULL);
@@ -44,7 +54,7 @@ void * send_client(void * m) {
 
 void * received(void * m)
 {
-        pthread_detach(pthread_self());
+    pthread_detach(pthread_self());
 	vector<descript_socket*> desc;
 	while(1)
 	{
@@ -52,21 +62,21 @@ void * received(void * m)
 		for(unsigned int i = 0; i < desc.size(); i++) {
 			if( desc[i]->message != "" )
 			{
-				if(!desc[i]->enable_message_runtime) 
+				if(!desc[i]->enable_message_runtime)
 				{
 					desc[i]->enable_message_runtime = true;
-			                if( pthread_create(&msg1[num_message], NULL, send_client, (void *) desc[i]) == 0) {
-						cerr << "ATTIVA THREAD INVIO MESSAGGI" << endl;
-					}
-					num_message++;
-					// start message background thread
-				}
-				cout << "id:      " << desc[i]->id      << endl
-				     << "ip:      " << desc[i]->ip      << endl
-				     << "message: " << desc[i]->message << endl
-				     << "socket:  " << desc[i]->socket  << endl
-				     << "enable:  " << desc[i]->enable_message_runtime << endl;
-				tcp.clean(i);
+			        if( pthread_create(&msg1[num_message], NULL, send_client, (void *) desc[i]) == 0) {
+					    cerr << "ATTIVA THREAD INVIO MESSAGGI" << endl;
+				    }
+				    num_message++;
+				    // start message background thread
+			    }
+			    cout << "id:      " << desc[i]->id      << endl
+			        << "ip:      " << desc[i]->ip      << endl
+			        << "message: " << desc[i]->message << endl
+			        << "socket:  " << desc[i]->socket  << endl
+			        << "enable:  " << desc[i]->enable_message_runtime << endl;
+			    tcp.clean(i);
 			}
 		}
 		usleep(1000);
@@ -76,10 +86,9 @@ void * received(void * m)
 
 int main(int argc, char **argv)
 {
-	if(argc < 2) {
-		cerr << "Usage: ./server port (opt)time-send" << endl;
-		return 0;
-	}
+    // google::InitGoogleLogging(argv[0]);
+    CHECK(argc >= 2) << "Usage: ./server port (opt)time-send.";
+
 	if(argc == 3)
 		time_send = atoi(argv[2]);
 	std::signal(SIGINT, close_app);
@@ -92,7 +101,7 @@ int main(int argc, char **argv)
 		{
 			while(1) {
 				tcp.accepted();
-				cerr << "Accepted" << endl;
+				LOG(INFO) << "Accepted.";
 			}
 		}
 	}
