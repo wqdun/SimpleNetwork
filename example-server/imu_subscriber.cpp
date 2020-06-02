@@ -5,6 +5,7 @@
 
 ImuSubscriber::ImuSubscriber(ros::NodeHandle node)
     : nh_(node)
+    , string2Send_("")
 {
     LOG(INFO) << __FUNCTION__ << " start.";
 }
@@ -18,21 +19,14 @@ void ImuSubscriber::RegisterCBs() {
 }
 
 void ImuSubscriber::ClientCB(const sc_msgs::imu5651::ConstPtr& pImu5651Msg) {
-    DLOG(INFO) << __FUNCTION__ << " start.";
+    LOG(INFO) << __FUNCTION__ << " start.";
 
-    isSaveLidar_ = pClientMsg->is_record;
-    isSolution_ = pClientMsg->is_solution;
+    string2Send_ = pImu5651Msg->latitude_gpgga;
+}
 
-    if (IsMarksCountUpdated(pClientMsg->marks_count)) {
-        WriteMarkFile(pClientMsg);
-        UpdatePreviousMarksCount(pClientMsg->marks_count);
-    }
-    // else: MarksCount Not Updated, No add 2 3 4
+std::string ImuSubscriber::GetString2Send() {
+    LOG(INFO) << __FUNCTION__ << " start.";
 
-    if (previousIsSolution_ != pClientMsg->is_solution) {
-        WriteSolutionToMarkFile(pClientMsg);
-        previousIsSolution_ = pClientMsg->is_solution;
-    }
-    // else: IsSolution_ Not Updated, No add 0 1
+    return string2Send_;
 }
 

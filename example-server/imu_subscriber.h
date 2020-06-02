@@ -9,7 +9,9 @@ class ImuSubscriber {
 public:
     ImuSubscriber(ros::NodeHandle node);
     ~ImuSubscriber();
+
     void RegisterCBs();
+    std::string GetString2Send();
 
 
 private:
@@ -17,6 +19,8 @@ private:
 
     ros::NodeHandle nh_;
     ros::Subscriber imuSub_;
+
+    std::string string2Send_;
 };
 
 
